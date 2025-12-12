@@ -11,6 +11,20 @@ module.exports = {
         const guild = channel.guild;
         const guildData = await Guild.findOne({ guildId: guild.id });
         
+        if (guildData?.blacklistRoleId) {
+            const blacklistRole = guild.roles.cache.get(guildData.blacklistRoleId);
+            if (blacklistRole) {
+                try {
+                    await channel.permissionOverwrites.create(blacklistRole, {
+                        ViewChannel: false,
+                        SendMessages: false,
+                        AddReactions: false,
+                        Connect: false
+                    });
+                } catch (e) {}
+            }
+        }
+        
         if (!guildData || !guildData.antiNuke.enabled) return;
         
         const fetchedLogs = await guild.fetchAuditLogs({ limit: 1, type: 10 }).catch(() => null);

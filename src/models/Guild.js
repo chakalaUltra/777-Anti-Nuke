@@ -21,8 +21,12 @@ const guildSchema = new mongoose.Schema({
             action: { type: String, enum: ['warn', 'mute', 'kick', 'ban'], default: 'warn' },
             muteDuration: { type: String, default: '10m' }
         }],
+        whitelistedUsers: [{ type: String }],
+        whitelistedRoles: [{ type: String }],
         logChannelId: { type: String, default: null }
     },
+    
+    blacklistRoleId: { type: String, default: null },
     
     logs: {
         moderation: { type: String, default: null },

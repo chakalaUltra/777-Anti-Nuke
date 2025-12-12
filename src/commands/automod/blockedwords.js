@@ -6,17 +6,17 @@ const config = require('../../config');
 module.exports = {
     name: 'blockedwords',
     description: 'Manage blocked words for automod',
-    usage: '?blockedwords <add/remove/list> [word] [action] [duration]',
+    usage: '?blockedwords <add/remove/list> [words] [action] [duration]',
     aliases: ['bw', 'badwords'],
     data: new SlashCommandBuilder()
         .setName('blockedwords')
         .setDescription('Manage blocked words for automod')
         .addSubcommand(subcommand =>
             subcommand.setName('add')
-                .setDescription('Add a word to the blocked list')
+                .setDescription('Add word(s) to the blocked list (comma-separated)')
                 .addStringOption(option =>
-                    option.setName('word')
-                        .setDescription('The word to block')
+                    option.setName('words')
+                        .setDescription('The word(s) to block (separate multiple with commas)')
                         .setRequired(true))
                 .addStringOption(option =>
                     option.setName('action')
@@ -34,10 +34,10 @@ module.exports = {
                         .setRequired(false)))
         .addSubcommand(subcommand =>
             subcommand.setName('remove')
-                .setDescription('Remove a word from the blocked list')
+                .setDescription('Remove word(s) from the blocked list (comma-separated)')
                 .addStringOption(option =>
-                    option.setName('word')
-                        .setDescription('The word to unblock')
+                    option.setName('words')
+                        .setDescription('The word(s) to unblock (separate multiple with commas)')
                         .setRequired(true)))
         .addSubcommand(subcommand =>
             subcommand.setName('list')
@@ -47,7 +47,7 @@ module.exports = {
         const action = args[0]?.toLowerCase();
         
         if (!action || !['add', 'remove', 'list'].includes(action)) {
-            return message.reply({ embeds: [errorEmbed('Usage: `?blockedwords <add/remove/list> [word] [action: warn/mute/kick/ban] [mute_duration]`')] });
+            return message.reply({ embeds: [errorEmbed('Usage: `?blockedwords add <words> [warn/mute/kick/ban] [duration]`\n`?blockedwords remove <words>`\n`?blockedwords list`\n\nSeparate multiple words with commas: `?blockedwords add hello, hi, hey warn`')] });
         }
         
         if (action === 'list') {
@@ -70,60 +70,93 @@ module.exports = {
                 title: `${config.emojis.x_} Blocked Words`,
                 description: wordList,
                 color: config.colors.warning,
-                timestamp: true,
                 footer: { text: `Total: ${blockedWords.length} words` }
             })] });
         }
         
-        const word = args[1]?.toLowerCase();
+        const remainingArgs = args.slice(1);
         
-        if (!word) {
-            return message.reply({ embeds: [errorEmbed('Please provide a word.')] });
+        if (remainingArgs.length === 0) {
+            return message.reply({ embeds: [errorEmbed('Please provide at least one word.')] });
+        }
+        
+        let wordAction = 'warn';
+        let muteDuration = '10m';
+        let wordsString = '';
+        
+        if (action === 'add') {
+            const lastArg = remainingArgs[remainingArgs.length - 1]?.toLowerCase();
+            const secondLastArg = remainingArgs[remainingArgs.length - 2]?.toLowerCase();
+            
+            if (['warn', 'mute', 'kick', 'ban'].includes(lastArg)) {
+                wordAction = lastArg;
+                wordsString = remainingArgs.slice(0, -1).join(' ');
+            } else if (['warn', 'mute', 'kick', 'ban'].includes(secondLastArg)) {
+                wordAction = secondLastArg;
+                muteDuration = lastArg;
+                wordsString = remainingArgs.slice(0, -2).join(' ');
+            } else {
+                wordsString = remainingArgs.join(' ');
+            }
+        } else {
+            wordsString = remainingArgs.join(' ');
+        }
+        
+        const words = wordsString.split(',').map(w => w.trim().toLowerCase()).filter(w => w.length > 0);
+        
+        if (words.length === 0) {
+            return message.reply({ embeds: [errorEmbed('Please provide at least one word.')] });
         }
         
         if (action === 'add') {
-            const wordAction = args[2]?.toLowerCase() || 'warn';
+            const existingWords = guildData.autoMod.blockedWords.map(bw => bw.word);
+            const newWords = words.filter(w => !existingWords.includes(w));
+            const skippedWords = words.filter(w => existingWords.includes(w));
             
-            if (!['warn', 'mute', 'kick', 'ban'].includes(wordAction)) {
-                return message.reply({ embeds: [errorEmbed('Action must be: warn, mute, kick, or ban.')] });
+            if (newWords.length === 0) {
+                return message.reply({ embeds: [errorEmbed('All specified words are already blocked.')] });
             }
             
-            const muteDuration = args[3] || '10m';
-            
-            const existingWord = guildData.autoMod.blockedWords.find(bw => bw.word === word);
-            if (existingWord) {
-                return message.reply({ embeds: [errorEmbed('This word is already blocked.')] });
-            }
+            const wordsToAdd = newWords.map(word => ({
+                word,
+                action: wordAction,
+                muteDuration
+            }));
             
             await Guild.updateOne(
                 { guildId: message.guild.id },
-                { 
-                    $push: { 
-                        'autoMod.blockedWords': {
-                            word,
-                            action: wordAction,
-                            muteDuration
-                        }
-                    }
-                }
+                { $push: { 'autoMod.blockedWords': { $each: wordsToAdd } } }
             );
             
             const durationText = wordAction === 'mute' ? ` for ${muteDuration}` : '';
-            return message.reply({ embeds: [successEmbed(`Word ||${word}|| has been blocked.\n**Action:** ${wordAction}${durationText}`)] });
+            let response = `Added ${newWords.length} word(s): ${newWords.map(w => `||${w}||`).join(', ')}\n**Action:** ${wordAction}${durationText}`;
+            if (skippedWords.length > 0) {
+                response += `\n\nSkipped (already blocked): ${skippedWords.map(w => `||${w}||`).join(', ')}`;
+            }
+            
+            return message.reply({ embeds: [successEmbed(response)] });
         }
         
         if (action === 'remove') {
-            const existingWord = guildData.autoMod.blockedWords.find(bw => bw.word === word);
-            if (!existingWord) {
-                return message.reply({ embeds: [errorEmbed('This word is not blocked.')] });
+            const existingWords = guildData.autoMod.blockedWords.map(bw => bw.word);
+            const wordsToRemove = words.filter(w => existingWords.includes(w));
+            const notFoundWords = words.filter(w => !existingWords.includes(w));
+            
+            if (wordsToRemove.length === 0) {
+                return message.reply({ embeds: [errorEmbed('None of the specified words are blocked.')] });
             }
             
             await Guild.updateOne(
                 { guildId: message.guild.id },
-                { $pull: { 'autoMod.blockedWords': { word } } }
+                { $pull: { 'autoMod.blockedWords': { word: { $in: wordsToRemove } } } }
             );
             
-            return message.reply({ embeds: [successEmbed(`Word ||${word}|| has been removed from blocked words.`)] });
+            let response = `Removed ${wordsToRemove.length} word(s): ${wordsToRemove.map(w => `||${w}||`).join(', ')}`;
+            if (notFoundWords.length > 0) {
+                response += `\n\nNot found: ${notFoundWords.map(w => `||${w}||`).join(', ')}`;
+            }
+            
+            return message.reply({ embeds: [successEmbed(response)] });
         }
     },
 
@@ -150,51 +183,69 @@ module.exports = {
                 title: `${config.emojis.x_} Blocked Words`,
                 description: wordList,
                 color: config.colors.warning,
-                timestamp: true,
                 footer: { text: `Total: ${blockedWords.length} words` }
             })] });
         }
         
-        const word = interaction.options.getString('word')?.toLowerCase();
+        const wordsString = interaction.options.getString('words');
+        const words = wordsString.split(',').map(w => w.trim().toLowerCase()).filter(w => w.length > 0);
+        
+        if (words.length === 0) {
+            return interaction.reply({ embeds: [errorEmbed('Please provide at least one word.')], ephemeral: true });
+        }
         
         if (action === 'add') {
             const wordAction = interaction.options.getString('action') || 'warn';
             const muteDuration = interaction.options.getString('duration') || '10m';
             
-            const existingWord = guildData.autoMod.blockedWords.find(bw => bw.word === word);
-            if (existingWord) {
-                return interaction.reply({ embeds: [errorEmbed('This word is already blocked.')], ephemeral: true });
+            const existingWords = guildData.autoMod.blockedWords.map(bw => bw.word);
+            const newWords = words.filter(w => !existingWords.includes(w));
+            const skippedWords = words.filter(w => existingWords.includes(w));
+            
+            if (newWords.length === 0) {
+                return interaction.reply({ embeds: [errorEmbed('All specified words are already blocked.')], ephemeral: true });
             }
+            
+            const wordsToAdd = newWords.map(word => ({
+                word,
+                action: wordAction,
+                muteDuration
+            }));
             
             await Guild.updateOne(
                 { guildId: interaction.guild.id },
-                { 
-                    $push: { 
-                        'autoMod.blockedWords': {
-                            word,
-                            action: wordAction,
-                            muteDuration
-                        }
-                    }
-                }
+                { $push: { 'autoMod.blockedWords': { $each: wordsToAdd } } }
             );
             
             const durationText = wordAction === 'mute' ? ` for ${muteDuration}` : '';
-            return interaction.reply({ embeds: [successEmbed(`Word ||${word}|| has been blocked.\n**Action:** ${wordAction}${durationText}`)] });
+            let response = `Added ${newWords.length} word(s): ${newWords.map(w => `||${w}||`).join(', ')}\n**Action:** ${wordAction}${durationText}`;
+            if (skippedWords.length > 0) {
+                response += `\n\nSkipped (already blocked): ${skippedWords.map(w => `||${w}||`).join(', ')}`;
+            }
+            
+            return interaction.reply({ embeds: [successEmbed(response)] });
         }
         
         if (action === 'remove') {
-            const existingWord = guildData.autoMod.blockedWords.find(bw => bw.word === word);
-            if (!existingWord) {
-                return interaction.reply({ embeds: [errorEmbed('This word is not blocked.')], ephemeral: true });
+            const existingWords = guildData.autoMod.blockedWords.map(bw => bw.word);
+            const wordsToRemove = words.filter(w => existingWords.includes(w));
+            const notFoundWords = words.filter(w => !existingWords.includes(w));
+            
+            if (wordsToRemove.length === 0) {
+                return interaction.reply({ embeds: [errorEmbed('None of the specified words are blocked.')], ephemeral: true });
             }
             
             await Guild.updateOne(
                 { guildId: interaction.guild.id },
-                { $pull: { 'autoMod.blockedWords': { word } } }
+                { $pull: { 'autoMod.blockedWords': { word: { $in: wordsToRemove } } } }
             );
             
-            return interaction.reply({ embeds: [successEmbed(`Word ||${word}|| has been removed from blocked words.`)] });
+            let response = `Removed ${wordsToRemove.length} word(s): ${wordsToRemove.map(w => `||${w}||`).join(', ')}`;
+            if (notFoundWords.length > 0) {
+                response += `\n\nNot found: ${notFoundWords.map(w => `||${w}||`).join(', ')}`;
+            }
+            
+            return interaction.reply({ embeds: [successEmbed(response)] });
         }
     }
 };
