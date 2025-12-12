@@ -22,7 +22,7 @@ module.exports = {
         try {
             const warnings = await Warning.find({ 
                 guildId: message.guild.id, 
-                oderId: target.id 
+                userId: target.id 
             }).sort({ createdAt: -1 });
             
             if (warnings.length === 0) {
@@ -61,7 +61,7 @@ module.exports = {
         try {
             const warnings = await Warning.find({ 
                 guildId: interaction.guild.id, 
-                oderId: target.id 
+                userId: target.id 
             }).sort({ createdAt: -1 });
             
             if (warnings.length === 0) {

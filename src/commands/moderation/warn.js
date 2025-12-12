@@ -37,14 +37,14 @@ module.exports = {
         try {
             await Warning.create({
                 guildId: message.guild.id,
-                oderId: target.id,
+                userId: target.id,
                 moderatorId: message.author.id,
                 reason
             });
             
             const warningCount = await Warning.countDocuments({ 
                 guildId: message.guild.id, 
-                oderId: target.id 
+                userId: target.id 
             });
             
             const dmEmbed = modEmbed({
@@ -88,14 +88,14 @@ module.exports = {
         try {
             await Warning.create({
                 guildId: interaction.guild.id,
-                oderId: target.id,
+                userId: target.id,
                 moderatorId: interaction.user.id,
                 reason
             });
             
             const warningCount = await Warning.countDocuments({ 
                 guildId: interaction.guild.id, 
-                oderId: target.id 
+                userId: target.id 
             });
             
             const dmEmbed = modEmbed({

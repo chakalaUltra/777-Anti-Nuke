@@ -33,7 +33,7 @@ module.exports = {
             if (option === 'all') {
                 const result = await Warning.deleteMany({ 
                     guildId: message.guild.id, 
-                    oderId: target.id 
+                    userId: target.id 
                 });
                 
                 const embed = successEmbed(`Deleted all ${result.deletedCount} warnings for ${target.tag}.`);
@@ -59,7 +59,7 @@ module.exports = {
                 
                 const warnings = await Warning.find({ 
                     guildId: message.guild.id, 
-                    oderId: target.id 
+                    userId: target.id 
                 }).sort({ createdAt: -1 });
                 
                 if (warnings.length === 0) {
@@ -102,7 +102,7 @@ module.exports = {
             if (option === 'all') {
                 const result = await Warning.deleteMany({ 
                     guildId: interaction.guild.id, 
-                    oderId: target.id 
+                    userId: target.id 
                 });
                 
                 const embed = successEmbed(`Deleted all ${result.deletedCount} warnings for ${target.tag}.`);
@@ -128,7 +128,7 @@ module.exports = {
                 
                 const warnings = await Warning.find({ 
                     guildId: interaction.guild.id, 
-                    oderId: target.id 
+                    userId: target.id 
                 }).sort({ createdAt: -1 });
                 
                 if (warnings.length === 0) {
