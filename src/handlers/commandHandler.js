@@ -1,9 +1,11 @@
 const fs = require('fs');
 const path = require('path');
+const { REST, Routes, SlashCommandBuilder } = require('discord.js');
 
 function loadCommands(client) {
     client.commands = new Map();
     client.aliases = new Map();
+    client.slashCommands = [];
     
     const commandFolders = fs.readdirSync(path.join(__dirname, '../commands'));
     
@@ -22,10 +24,36 @@ function loadCommands(client) {
                     }
                 }
                 
+                if (command.data) {
+                    client.slashCommands.push(command.data.toJSON());
+                }
+                
                 console.log(`Loaded command: ${command.name}`);
             }
         }
     }
 }
 
-module.exports = { loadCommands };
+async function registerSlashCommands(client) {
+    if (!process.env.DISCORD_TOKEN) {
+        console.error('DISCORD_TOKEN not found, cannot register slash commands');
+        return;
+    }
+
+    const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
+
+    try {
+        console.log(`Started refreshing ${client.slashCommands.length} application (/) commands.`);
+
+        const data = await rest.put(
+            Routes.applicationCommands(client.user.id),
+            { body: client.slashCommands },
+        );
+
+        console.log(`Successfully reloaded ${data.length} application (/) commands.`);
+    } catch (error) {
+        console.error('Error registering slash commands:', error);
+    }
+}
+
+module.exports = { loadCommands, registerSlashCommands };

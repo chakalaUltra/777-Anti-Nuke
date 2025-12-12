@@ -15,12 +15,12 @@ A comprehensive Discord anti-nuke and auto-moderation bot with full protection a
 
 ### Auto-Moderation
 - Blocked words system with customizable actions (warn, mute, kick, ban)
-- Mute duration configuration
+- Timeout duration configuration (uses Discord's native timeout feature)
 - Automatic logging
 
 ### Moderation Commands
-- ban, kick, mute, unmute, unban
-- warn, warnings, delwarn
+- ban, kick, mute (timeout), unmute
+- unban, warn, warnings, delwarn
 - purge, slowmode, lock, unlock
 - userinfo, serverinfo
 
@@ -43,7 +43,6 @@ A comprehensive Discord anti-nuke and auto-moderation bot with full protection a
 │   ├── commands/
 │   │   ├── antinuke/          # Anti-nuke commands
 │   │   ├── automod/           # AutoMod commands
-│   │   ├── logs/              # Log configuration commands
 │   │   ├── moderation/        # Moderation commands
 │   │   └── settings/          # Settings and permission commands
 │   ├── events/                # Discord event handlers
@@ -53,52 +52,60 @@ A comprehensive Discord anti-nuke and auto-moderation bot with full protection a
 ```
 
 ## Environment Variables Required
-- `BOT_TOKEN` - Discord bot token
+- `DISCORD_TOKEN` - Discord bot token
 - `CLIENT_ID` - Discord application client ID
 - `MongoDB` - MongoDB connection string
 
-## Default Prefix
-`?` (can be changed with `?setprefix` command)
+## Commands
+
+### Prefix Commands
+Default prefix is `?` (can be changed with `?setprefix` command)
+
+### Slash Commands
+All commands are now available as both prefix commands and slash commands!
+Type `/` in Discord to see all available slash commands.
 
 ## Command Categories
 
 ### Anti-Nuke Commands
-- `?antinuke [on/off]` - Toggle anti-nuke protection
-- `?antinuke-whitelist <add/remove/list> [user]`
-- `?antinuke-blacklist <add/remove/list> [user]`
-- `?antinuke-botwhitelist <add/remove/list> [botId]`
-- `?antinuke-botblacklist <add/remove/list> [botId]`
+- `antinuke [on/off]` - Toggle anti-nuke protection
+- `antinuke-whitelist <add/remove/list> [user]`
+- `antinuke-blacklist <add/remove/list> [user]`
+- `antinuke-botwhitelist <add/remove/list> [botId]`
+- `antinuke-botblacklist <add/remove/list> [botId]`
 
 ### AutoMod Commands
-- `?automod [on/off]` - Toggle automod
-- `?blockedwords <add/remove/list> [word] [action] [duration]`
+- `automod [on/off]` - Toggle automod
+- `blockedwords <add/remove/list> [word] [action] [duration]`
 
 ### Moderation Commands
-- `?ban <user> [reason]`
-- `?kick <user> [reason]`
-- `?mute <user> [duration] [reason]`
-- `?unmute <user> [reason]`
-- `?unban <userId> [reason]`
-- `?warn <user> [reason]`
-- `?warnings [user]`
-- `?delwarn <user> [number|all]`
-- `?purge <amount> [user]`
-- `?slowmode <duration|off>`
-- `?lock [channel] [reason]`
-- `?unlock [channel] [reason]`
-- `?userinfo [user]`
-- `?serverinfo`
+- `ban <user> [reason]`
+- `kick <user> [reason]`
+- `mute <user> [duration] [reason]` - Uses Discord's native timeout feature
+- `unmute <user> [reason]` - Removes Discord timeout
+- `unban <userId> [reason]`
+- `warn <user> [reason]`
+- `warnings [user]`
+- `delwarn <user> [number|all]`
+- `purge <amount> [user]`
+- `slowmode <duration|off>`
+- `lock [channel] [reason]`
+- `unlock [channel] [reason]`
+- `userinfo [user]`
+- `serverinfo`
 
 ### Settings Commands
-- `?settings` - View all settings
-- `?setprefix <prefix>` - Change prefix
-- `?perm-add <role> <command|*>` - Add command permission to role
-- `?perm-remove <role> <command|all>` - Remove command permission
-
-### Log Commands
-- `?logs` - View all log channels
-- `?logs <type> add #channel` - Set log channel
-- `?logs <type> remove` - Disable log type
+- `settings` - View all settings
+- `setprefix <prefix>` - Change prefix
+- `perm-add <role> <command|*>` - Add command permission to role
+- `perm-remove <role> <command|all>` - Remove command permission
+- `help [command]` - View all commands or get info on a specific command
 
 ## Recent Changes
+- December 12, 2025: Added slash command support for all commands
+- December 12, 2025: Updated mute/unmute to use Discord's native timeout feature instead of mute roles
 - December 12, 2025: Initial bot creation with full anti-nuke and automod features
+
+## User Preferences
+- Slash commands preferred over prefix commands
+- Uses Discord's native timeout for muting instead of mute roles

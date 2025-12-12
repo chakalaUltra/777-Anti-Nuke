@@ -1,3 +1,4 @@
+const { SlashCommandBuilder } = require('discord.js');
 const { errorEmbed, successEmbed, modEmbed } = require('../../utils/embedBuilder');
 const config = require('../../config');
 
@@ -6,6 +7,20 @@ module.exports = {
     description: 'Delete multiple messages at once',
     usage: '?purge <amount> [user]',
     aliases: ['clear', 'prune', 'bulkdelete'],
+    data: new SlashCommandBuilder()
+        .setName('purge')
+        .setDescription('Delete multiple messages at once')
+        .addIntegerOption(option => 
+            option.setName('amount')
+                .setDescription('Number of messages to delete (1-100)')
+                .setRequired(true)
+                .setMinValue(1)
+                .setMaxValue(100))
+        .addUserOption(option =>
+            option.setName('user')
+                .setDescription('Only delete messages from this user')
+                .setRequired(false)),
+
     async execute(message, args, client, guildData) {
         const amount = parseInt(args[0]);
         
@@ -48,6 +63,44 @@ module.exports = {
         } catch (error) {
             console.error('Error purging messages:', error);
             return message.reply({ embeds: [errorEmbed('An error occurred. Messages older than 14 days cannot be bulk deleted.')] });
+        }
+    },
+
+    async executeSlash(interaction, client, guildData) {
+        const amount = interaction.options.getInteger('amount');
+        const target = interaction.options.getUser('user');
+        
+        try {
+            await interaction.deferReply({ ephemeral: true });
+            
+            let messages = await interaction.channel.messages.fetch({ limit: amount });
+            
+            if (target) {
+                messages = messages.filter(msg => msg.author.id === target.id);
+            }
+            
+            messages = messages.filter(msg => Date.now() - msg.createdTimestamp < 1209600000);
+            
+            const deleted = await interaction.channel.bulkDelete(messages, true);
+            
+            await interaction.editReply({ 
+                embeds: [successEmbed(`Deleted ${deleted.size} messages${target ? ` from ${target.tag}` : ''}.`)] 
+            });
+            
+            if (guildData.logs.moderation) {
+                const logChannel = interaction.guild.channels.cache.get(guildData.logs.moderation);
+                if (logChannel) {
+                    const logEmbed = modEmbed({
+                        title: `${config.emojis.important} Messages Purged`,
+                        description: `**Channel:** ${interaction.channel}\n**Moderator:** ${interaction.user.tag}\n**Messages Deleted:** ${deleted.size}${target ? `\n**Target User:** ${target.tag}` : ''}`,
+                        footer: { text: `Channel ID: ${interaction.channel.id}` }
+                    });
+                    await logChannel.send({ embeds: [logEmbed] });
+                }
+            }
+        } catch (error) {
+            console.error('Error purging messages:', error);
+            return interaction.editReply({ embeds: [errorEmbed('An error occurred. Messages older than 14 days cannot be bulk deleted.')] });
         }
     }
 };

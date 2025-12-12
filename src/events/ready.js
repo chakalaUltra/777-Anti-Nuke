@@ -1,3 +1,5 @@
+const { registerSlashCommands } = require('../handlers/commandHandler');
+
 module.exports = {
     name: 'ready',
     once: true,
@@ -5,8 +7,10 @@ module.exports = {
         console.log(`Logged in as ${client.user.tag}!`);
         console.log(`Serving ${client.guilds.cache.size} servers`);
         
+        await registerSlashCommands(client);
+        
         client.user.setPresence({
-            activities: [{ name: '?help | Anti-Nuke Protection', type: 3 }],
+            activities: [{ name: '/help | Anti-Nuke Protection', type: 3 }],
             status: 'online'
         });
     }

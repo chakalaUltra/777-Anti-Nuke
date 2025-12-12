@@ -1,3 +1,4 @@
+const { SlashCommandBuilder, ChannelType } = require('discord.js');
 const { errorEmbed, successEmbed, modEmbed } = require('../../utils/embedBuilder');
 const config = require('../../config');
 
@@ -6,6 +7,19 @@ module.exports = {
     description: 'Lock a channel (prevent members from sending messages)',
     usage: '?lock [channel] [reason]',
     aliases: ['lockdown'],
+    data: new SlashCommandBuilder()
+        .setName('lock')
+        .setDescription('Lock a channel (prevent members from sending messages)')
+        .addChannelOption(option => 
+            option.setName('channel')
+                .setDescription('The channel to lock (defaults to current channel)')
+                .addChannelTypes(ChannelType.GuildText)
+                .setRequired(false))
+        .addStringOption(option =>
+            option.setName('reason')
+                .setDescription('Reason for locking the channel')
+                .setRequired(false)),
+
     async execute(message, args, client, guildData) {
         const channel = message.mentions.channels.first() || message.channel;
         const reason = args.slice(message.mentions.channels.size > 0 ? 1 : 0).join(' ') || 'No reason provided';
@@ -38,6 +52,41 @@ module.exports = {
         } catch (error) {
             console.error('Error locking channel:', error);
             return message.reply({ embeds: [errorEmbed('An error occurred while locking the channel.')] });
+        }
+    },
+
+    async executeSlash(interaction, client, guildData) {
+        const channel = interaction.options.getChannel('channel') || interaction.channel;
+        const reason = interaction.options.getString('reason') || 'No reason provided';
+        
+        try {
+            await channel.permissionOverwrites.edit(interaction.guild.roles.everyone, {
+                SendMessages: false
+            }, { reason: `Locked by ${interaction.user.tag}: ${reason}` });
+            
+            await interaction.reply({ embeds: [successEmbed(`${channel} has been locked.\n**Reason:** ${reason}`)] });
+            
+            if (channel.id !== interaction.channel.id) {
+                await channel.send({ embeds: [modEmbed({
+                    title: `${config.emojis.alarm} Channel Locked`,
+                    description: `This channel has been locked by ${interaction.user}.\n**Reason:** ${reason}`
+                })] });
+            }
+            
+            if (guildData.logs.moderation) {
+                const logChannel = interaction.guild.channels.cache.get(guildData.logs.moderation);
+                if (logChannel) {
+                    const logEmbed = modEmbed({
+                        title: `${config.emojis.alarm} Channel Locked`,
+                        description: `**Channel:** ${channel}\n**Moderator:** ${interaction.user.tag}\n**Reason:** ${reason}`,
+                        footer: { text: `Channel ID: ${channel.id}` }
+                    });
+                    await logChannel.send({ embeds: [logEmbed] });
+                }
+            }
+        } catch (error) {
+            console.error('Error locking channel:', error);
+            return interaction.reply({ embeds: [errorEmbed('An error occurred while locking the channel.')], ephemeral: true });
         }
     }
 };

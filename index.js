@@ -35,7 +35,7 @@ async function start() {
     loadEvents(client);
     
     try {
-        await client.login(process.env.BOT_TOKEN);
+        await client.login(process.env.DISCORD_TOKEN);
     } catch (error) {
         console.error('Failed to login:', error);
         process.exit(1);
