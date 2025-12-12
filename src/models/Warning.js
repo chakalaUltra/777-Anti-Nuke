@@ -8,6 +8,6 @@ const warningSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
-warningSchema.index({ guildId: 1, oderId: 1 });
+warningSchema.index({ guildId: 1, userId: 1 });
 
 module.exports = mongoose.model('Warning', warningSchema);

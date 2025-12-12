@@ -21,6 +21,7 @@ module.exports = {
         if (executor.id === client.user.id) return;
         if (executor.id === guild.ownerId) return;
         if (guildData.antiNuke.whitelistedUsers.includes(executor.id)) return;
+        if (executor.bot && guildData.antiNuke.whitelistedBots.includes(executor.id)) return;
         
         const result = trackAction(guild.id, executor.id, 'memberBan');
         

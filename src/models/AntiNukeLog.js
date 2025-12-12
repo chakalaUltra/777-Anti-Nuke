@@ -9,6 +9,6 @@ const antiNukeLogSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now, expires: 60 }
 });
 
-antiNukeLogSchema.index({ guildId: 1, oderId: 1, eventType: 1 });
+antiNukeLogSchema.index({ guildId: 1, userId: 1, eventType: 1 });
 
 module.exports = mongoose.model('AntiNukeLog', antiNukeLogSchema);

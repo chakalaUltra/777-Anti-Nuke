@@ -9,7 +9,7 @@ const muteSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
-muteSchema.index({ guildId: 1, oderId: 1 });
+muteSchema.index({ guildId: 1, userId: 1 });
 muteSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 module.exports = mongoose.model('Mute', muteSchema);
