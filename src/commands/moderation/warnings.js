@@ -28,27 +28,24 @@ module.exports = {
             if (warnings.length === 0) {
                 return message.reply({ embeds: [createEmbed({
                     title: `${config.emojis.approved} No Warnings`,
-                    description: `**${target.tag}** has no warnings in this server.`,
-                    color: config.colors.success
+                    description: `${target.tag} has no warnings in this server.`,
+                    color: config.colors.success,
+                    timestamp: true
                 })] });
             }
             
-            const fields = warnings.slice(0, 10).map((warn, index) => {
+            const warningList = warnings.slice(0, 10).map((warn, index) => {
                 const moderator = client.users.cache.get(warn.moderatorId);
                 const date = new Date(warn.createdAt).toLocaleDateString();
-                return {
-                    name: `#${index + 1} - ${date}`,
-                    value: `${config.emojis.note} **Reason:** ${warn.reason}\n${config.emojis.user_member} **By:** ${moderator?.tag || 'Unknown'}`,
-                    inline: false
-                };
-            });
+                return `**${index + 1}.** ${warn.reason}\n   ${config.emojis.user_member} Moderator: ${moderator?.tag || 'Unknown'} | ${date}`;
+            }).join('\n\n');
             
             const embed = createEmbed({
-                title: `${config.emojis.alarm} Warnings for ${target.tag}`,
-                description: `${config.emojis.important} **Total Warnings:** ${warnings.length}`,
+                title: `${config.emojis.note} Warnings for ${target.tag}`,
+                description: warningList,
                 color: config.colors.warning,
-                fields: fields,
-                footer: { text: `Showing ${Math.min(warnings.length, 10)} of ${warnings.length} warnings` }
+                timestamp: true,
+                footer: { text: `Total Warnings: ${warnings.length} | Showing last 10` }
             });
             
             await message.reply({ embeds: [embed] });
@@ -70,27 +67,24 @@ module.exports = {
             if (warnings.length === 0) {
                 return interaction.reply({ embeds: [createEmbed({
                     title: `${config.emojis.approved} No Warnings`,
-                    description: `**${target.tag}** has no warnings in this server.`,
-                    color: config.colors.success
+                    description: `${target.tag} has no warnings in this server.`,
+                    color: config.colors.success,
+                    timestamp: true
                 })] });
             }
             
-            const fields = warnings.slice(0, 10).map((warn, index) => {
+            const warningList = warnings.slice(0, 10).map((warn, index) => {
                 const moderator = client.users.cache.get(warn.moderatorId);
                 const date = new Date(warn.createdAt).toLocaleDateString();
-                return {
-                    name: `#${index + 1} - ${date}`,
-                    value: `${config.emojis.note} **Reason:** ${warn.reason}\n${config.emojis.user_member} **By:** ${moderator?.tag || 'Unknown'}`,
-                    inline: false
-                };
-            });
+                return `**${index + 1}.** ${warn.reason}\n   ${config.emojis.user_member} Moderator: ${moderator?.tag || 'Unknown'} | ${date}`;
+            }).join('\n\n');
             
             const embed = createEmbed({
-                title: `${config.emojis.alarm} Warnings for ${target.tag}`,
-                description: `${config.emojis.important} **Total Warnings:** ${warnings.length}`,
+                title: `${config.emojis.note} Warnings for ${target.tag}`,
+                description: warningList,
                 color: config.colors.warning,
-                fields: fields,
-                footer: { text: `Showing ${Math.min(warnings.length, 10)} of ${warnings.length} warnings` }
+                timestamp: true,
+                footer: { text: `Total Warnings: ${warnings.length} | Showing last 10` }
             });
             
             await interaction.reply({ embeds: [embed] });
