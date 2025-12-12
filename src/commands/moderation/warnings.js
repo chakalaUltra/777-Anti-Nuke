@@ -28,24 +28,27 @@ module.exports = {
             if (warnings.length === 0) {
                 return message.reply({ embeds: [createEmbed({
                     title: `${config.emojis.approved} No Warnings`,
-                    description: `${target.tag} has no warnings in this server.`,
-                    color: config.colors.success,
-                    timestamp: true
+                    description: `**${target.tag}** has no warnings in this server.`,
+                    color: config.colors.success
                 })] });
             }
             
-            const warningList = warnings.slice(0, 10).map((warn, index) => {
+            const fields = warnings.slice(0, 10).map((warn, index) => {
                 const moderator = client.users.cache.get(warn.moderatorId);
                 const date = new Date(warn.createdAt).toLocaleDateString();
-                return `**${index + 1}.** ${warn.reason}\n   ${config.emojis.user_member} Moderator: ${moderator?.tag || 'Unknown'} | ${date}`;
-            }).join('\n\n');
+                return {
+                    name: `#${index + 1} - ${date}`,
+                    value: `${config.emojis.note} **Reason:** ${warn.reason}\n${config.emojis.user_member} **By:** ${moderator?.tag || 'Unknown'}`,
+                    inline: false
+                };
+            });
             
             const embed = createEmbed({
-                title: `${config.emojis.note} Warnings for ${target.tag}`,
-                description: warningList,
+                title: `${config.emojis.alarm} Warnings for ${target.tag}`,
+                description: `${config.emojis.important} **Total Warnings:** ${warnings.length}`,
                 color: config.colors.warning,
-                timestamp: true,
-                footer: { text: `Total Warnings: ${warnings.length} | Showing last 10` }
+                fields: fields,
+                footer: { text: `Showing ${Math.min(warnings.length, 10)} of ${warnings.length} warnings` }
             });
             
             await message.reply({ embeds: [embed] });
@@ -67,24 +70,27 @@ module.exports = {
             if (warnings.length === 0) {
                 return interaction.reply({ embeds: [createEmbed({
                     title: `${config.emojis.approved} No Warnings`,
-                    description: `${target.tag} has no warnings in this server.`,
-                    color: config.colors.success,
-                    timestamp: true
+                    description: `**${target.tag}** has no warnings in this server.`,
+                    color: config.colors.success
                 })] });
             }
             
-            const warningList = warnings.slice(0, 10).map((warn, index) => {
+            const fields = warnings.slice(0, 10).map((warn, index) => {
                 const moderator = client.users.cache.get(warn.moderatorId);
                 const date = new Date(warn.createdAt).toLocaleDateString();
-                return `**${index + 1}.** ${warn.reason}\n   ${config.emojis.user_member} Moderator: ${moderator?.tag || 'Unknown'} | ${date}`;
-            }).join('\n\n');
+                return {
+                    name: `#${index + 1} - ${date}`,
+                    value: `${config.emojis.note} **Reason:** ${warn.reason}\n${config.emojis.user_member} **By:** ${moderator?.tag || 'Unknown'}`,
+                    inline: false
+                };
+            });
             
             const embed = createEmbed({
-                title: `${config.emojis.note} Warnings for ${target.tag}`,
-                description: warningList,
+                title: `${config.emojis.alarm} Warnings for ${target.tag}`,
+                description: `${config.emojis.important} **Total Warnings:** ${warnings.length}`,
                 color: config.colors.warning,
-                timestamp: true,
-                footer: { text: `Total Warnings: ${warnings.length} | Showing last 10` }
+                fields: fields,
+                footer: { text: `Showing ${Math.min(warnings.length, 10)} of ${warnings.length} warnings` }
             });
             
             await interaction.reply({ embeds: [embed] });
