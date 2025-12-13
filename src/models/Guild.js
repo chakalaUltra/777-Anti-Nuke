@@ -1,5 +1,10 @@
 const mongoose = require('mongoose');
 
+const categoryWhitelistSchema = {
+    users: [{ type: String }],
+    roles: [{ type: String }]
+};
+
 const guildSchema = new mongoose.Schema({
     guildId: { type: String, required: true, unique: true },
     prefix: { type: String, default: '?' },
@@ -11,7 +16,25 @@ const guildSchema = new mongoose.Schema({
         blacklistedUsers: [{ type: String }],
         blacklistedBots: [{ type: String }],
         punishmentType: { type: String, default: 'ban' },
-        logChannelId: { type: String, default: null }
+        logChannelId: { type: String, default: null },
+        categoryWhitelist: {
+            bans: categoryWhitelistSchema,
+            kicks: categoryWhitelistSchema,
+            roles: categoryWhitelistSchema,
+            channels: categoryWhitelistSchema,
+            webhooks: categoryWhitelistSchema,
+            emojis: categoryWhitelistSchema,
+            all: categoryWhitelistSchema
+        },
+        categoryBlacklist: {
+            bans: categoryWhitelistSchema,
+            kicks: categoryWhitelistSchema,
+            roles: categoryWhitelistSchema,
+            channels: categoryWhitelistSchema,
+            webhooks: categoryWhitelistSchema,
+            emojis: categoryWhitelistSchema,
+            all: categoryWhitelistSchema
+        }
     },
     
     autoMod: {

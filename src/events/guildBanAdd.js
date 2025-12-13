@@ -1,6 +1,7 @@
 const Guild = require('../models/Guild');
 const { trackAction } = require('../utils/antiNukeTracker');
 const { antiNukeEmbed } = require('../utils/embedBuilder');
+const { isWhitelistedForCategory, isBlacklistedForCategory } = require('../utils/antiNukeHelper');
 const config = require('../config');
 
 module.exports = {
@@ -20,23 +21,30 @@ module.exports = {
         const executor = banLog.executor;
         if (executor.id === client.user.id) return;
         if (executor.id === guild.ownerId) return;
-        if (guildData.antiNuke.whitelistedUsers.includes(executor.id)) return;
-        if (executor.bot && guildData.antiNuke.whitelistedBots.includes(executor.id)) return;
         
-        const result = trackAction(guild.id, executor.id, 'memberBan');
+        const executorMember = await guild.members.fetch(executor.id).catch(() => null);
+        const executorRoles = executorMember ? Array.from(executorMember.roles.cache.keys()) : [];
+        
+        const isBlacklisted = isBlacklistedForCategory(guildData, executor.id, executorRoles, 'bans', executor.bot);
+        
+        if (!isBlacklisted) {
+            if (isWhitelistedForCategory(guildData, executor.id, executorRoles, 'bans', executor.bot)) return;
+        }
+        
+        const result = isBlacklisted ? { triggered: true, count: 1, limit: 1 } : trackAction(guild.id, executor.id, 'memberBan');
         
         if (result.triggered) {
             try {
                 const member = await guild.members.fetch(executor.id).catch(() => null);
                 if (member) {
-                    await member.ban({ reason: '[Anti-Nuke] Mass ban detected' });
+                    await member.ban({ reason: isBlacklisted ? '[Anti-Nuke] Blacklisted user attempted ban' : '[Anti-Nuke] Mass ban detected' });
                 }
                 
                 const owner = await client.users.fetch(guild.ownerId).catch(() => null);
                 if (owner) {
                     const dmEmbed = antiNukeEmbed({
                         title: `${config.emojis.alarm} Anti-Nuke Alert`,
-                        description: `**Server:** ${guild.name}\n**User:** ${executor.tag} (${executor.id})\n**Action:** Mass Ban Detected\n**Bans:** ${result.count}/${result.limit} in the time limit\n**Punishment:** Banned`,
+                        description: `**Server:** ${guild.name}\n**User:** ${executor.tag} (${executor.id})\n**Action:** ${isBlacklisted ? 'Blacklisted User Ban Attempt' : 'Mass Ban Detected'}\n**Bans:** ${result.count}/${result.limit} in the time limit\n**Punishment:** Banned`,
                         timestamp: true
                     });
                     await owner.send({ embeds: [dmEmbed] }).catch(() => {});
@@ -47,7 +55,7 @@ module.exports = {
                     if (logChannel) {
                         const logEmbed = antiNukeEmbed({
                             title: `${config.emojis.alarm} Anti-Nuke Triggered`,
-                            description: `**User:** ${executor.tag} (${executor.id})\n**Action:** Mass Ban\n**Count:** ${result.count} bans\n**Punishment:** Banned`,
+                            description: `**User:** ${executor.tag} (${executor.id})\n**Action:** ${isBlacklisted ? 'Blacklisted User Ban' : 'Mass Ban'}\n**Count:** ${result.count} bans\n**Punishment:** Banned`,
                             timestamp: true
                         });
                         await logChannel.send({ embeds: [logEmbed] });
