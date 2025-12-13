@@ -69,10 +69,12 @@ Type `/` in Discord to see all available slash commands.
 
 ### Anti-Nuke Commands
 - `antinuke [on/off]` - Toggle anti-nuke protection
-- `antinuke-whitelist <add/remove/list> [user]`
-- `antinuke-blacklist <add/remove/list> [user]`
+- `antinuke-whitelist <add/remove/list> <category> [user/role]` - Category-specific whitelist for users/roles
+- `antinuke-blacklist <add/remove/list> <category> [user/role]` - Category-specific blacklist for users/roles
 - `antinuke-botwhitelist <add/remove/list> [botId]`
 - `antinuke-botblacklist <add/remove/list> [botId]`
+
+**Whitelist/Blacklist Categories:** bans, kicks, roles, channels, webhooks, emojis, all
 
 ### AutoMod Commands
 - `automod [on/off]` - Toggle automod
@@ -102,6 +104,7 @@ Type `/` in Discord to see all available slash commands.
 - `help [command]` - View all commands or get info on a specific command
 
 ## Recent Changes
+- December 13, 2025: Updated whitelist/blacklist commands to support both users AND roles with category-specific controls (bans, kicks, roles, channels, webhooks, emojis, all)
 - December 12, 2025: Added slash command support for all commands
 - December 12, 2025: Updated mute/unmute to use Discord's native timeout feature instead of mute roles
 - December 12, 2025: Initial bot creation with full anti-nuke and automod features
