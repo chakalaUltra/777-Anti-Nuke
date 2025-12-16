@@ -1,16 +1,54 @@
 const Guild = require('../models/Guild');
 const { hasCommandPermission, hasDangerousCommandPermission } = require('../utils/permissions');
 const { errorEmbed } = require('../utils/embedBuilder');
+const { handleTicketInteraction, handleModalSubmit } = require('../utils/ticketHandler');
 
 const dangerousCommands = [
     'antinuke', 'antinuke-whitelist', 'antinuke-blacklist',
     'antinuke-botwhitelist', 'antinuke-botblacklist', 'automod',
-    'blockedwords', 'setprefix', 'settings', 'perm-add', 'perm-remove'
+    'blockedwords', 'setprefix', 'settings', 'perm-add', 'perm-remove',
+    'ticket-wizard'
 ];
 
 module.exports = {
     name: 'interactionCreate',
     async execute(interaction, client) {
+        if (interaction.isButton() || interaction.isStringSelectMenu()) {
+            const customId = interaction.customId;
+            if (customId.startsWith('ticket_')) {
+                try {
+                    await handleTicketInteraction(interaction, client);
+                } catch (error) {
+                    console.error('Error handling ticket interaction:', error);
+                    if (!interaction.replied && !interaction.deferred) {
+                        await interaction.reply({ 
+                            embeds: [errorEmbed('An error occurred while processing this action.')],
+                            ephemeral: true 
+                        }).catch(() => {});
+                    }
+                }
+                return;
+            }
+        }
+
+        if (interaction.isModalSubmit()) {
+            const customId = interaction.customId;
+            if (customId.startsWith('ticket_')) {
+                try {
+                    await handleModalSubmit(interaction, client);
+                } catch (error) {
+                    console.error('Error handling ticket modal:', error);
+                    if (!interaction.replied && !interaction.deferred) {
+                        await interaction.reply({ 
+                            embeds: [errorEmbed('An error occurred while processing your submission.')],
+                            ephemeral: true 
+                        }).catch(() => {});
+                    }
+                }
+                return;
+            }
+        }
+
         if (!interaction.isChatInputCommand()) return;
 
         const command = client.commands.get(interaction.commandName);
