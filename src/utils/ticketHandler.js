@@ -240,6 +240,15 @@ async function handleWizardStep(interaction, client) {
             .sort((a, b) => b.position - a.position)
             .first(25);
 
+        if (!roles || roles.length === 0) {
+            const embed = createEmbed({
+                title: `${config.emojis.x_} No Roles Found`,
+                description: 'Please create at least one role for support staff before running this wizard.',
+                color: config.colors.error
+            });
+            return interaction.update({ embeds: [embed], components: [] });
+        }
+
         const embed = createEmbed({
             title: `${config.emojis.configure_settings} Ticket System Setup - Step 8/10`,
             description: '**Select the support team roles.**\n\nThese roles will have access to all tickets.',
@@ -250,7 +259,7 @@ async function handleWizardStep(interaction, client) {
             .setCustomId('ticket_wizard_support_roles')
             .setPlaceholder('Select support roles')
             .setMinValues(1)
-            .setMaxValues(Math.min(roles.size, 10))
+            .setMaxValues(Math.min(roles.length, 10))
             .addOptions(roles.map(role => ({
                 label: role.name,
                 value: role.id
