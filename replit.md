@@ -44,11 +44,12 @@ A comprehensive Discord anti-nuke and auto-moderation bot with full protection a
 │   │   ├── antinuke/          # Anti-nuke commands
 │   │   ├── automod/           # AutoMod commands
 │   │   ├── moderation/        # Moderation commands
-│   │   └── settings/          # Settings and permission commands
+│   │   ├── settings/          # Settings and permission commands
+│   │   └── tickets/           # Ticket system commands
 │   ├── events/                # Discord event handlers
 │   ├── handlers/              # Command and event loaders
-│   ├── models/                # MongoDB schemas
-│   └── utils/                 # Utility functions
+│   ├── models/                # MongoDB schemas (Guild, Ticket, TicketConfig, etc.)
+│   └── utils/                 # Utility functions (embedBuilder, ticketHandler, etc.)
 ```
 
 ## Environment Variables Required
@@ -103,7 +104,32 @@ Type `/` in Discord to see all available slash commands.
 - `perm-remove <role> <command|all>` - Remove command permission
 - `help [command]` - View all commands or get info on a specific command
 
+### Ticket Commands
+- `/ticket-wizard` - Setup the ticket system with a step-by-step wizard (Admin only)
+- `/add <user>` - Add a user to the current ticket (Support staff only)
+- `/remove <user>` - Remove a user from the current ticket (Support staff only)
+
+**Ticket Panel Features:**
+- Create Ticket button for users to open support tickets
+- Optional pre-ticket questions before creating a ticket
+- Close button - Removes user view access and moves to closed category
+- Claim button - Staff can claim tickets (shows who's handling it)
+- Transcript button - Generates HTML transcript of the ticket
+- Delete button - Deletes the ticket channel with transcript logging
+- Re-Open button - Reopens a closed ticket
+
+**Ticket Configuration Options:**
+- Panel channel, title, description, and color
+- Questions to ask before ticket creation (optional)
+- Ticket category and closed tickets category
+- Log channel for all ticket events
+- Support team roles
+- Ping support on new tickets (toggle)
+- DM transcript to ticket creator (toggle)
+- Custom welcome message for new tickets
+
 ## Recent Changes
+- December 16, 2025: Added comprehensive ticket system with /ticket-wizard setup, ticket panels, Close/Claim buttons, Transcript/Delete/Re-Open controls, /add and /remove commands, and full logging
 - December 13, 2025: Updated whitelist/blacklist commands to support both users AND roles with category-specific controls (bans, kicks, roles, channels, webhooks, emojis, all)
 - December 12, 2025: Added slash command support for all commands
 - December 12, 2025: Updated mute/unmute to use Discord's native timeout feature instead of mute roles
