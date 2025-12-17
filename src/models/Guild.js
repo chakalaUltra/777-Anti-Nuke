@@ -17,6 +17,22 @@ const guildSchema = new mongoose.Schema({
         blacklistedBots: [{ type: String }],
         punishmentType: { type: String, default: 'ban' },
         logChannelId: { type: String, default: null },
+        protections: {
+            antiBan: { type: Boolean, default: true },
+            antiKick: { type: Boolean, default: true },
+            antiRoleCreate: { type: Boolean, default: true },
+            antiRoleDelete: { type: Boolean, default: true },
+            antiChannelCreate: { type: Boolean, default: true },
+            antiChannelDelete: { type: Boolean, default: true },
+            antiWebhook: { type: Boolean, default: true },
+            antiBot: { type: Boolean, default: true }
+        },
+        thresholds: {
+            bans: { type: Number, default: 3 },
+            kicks: { type: Number, default: 3 },
+            roles: { type: Number, default: 3 },
+            channels: { type: Number, default: 3 }
+        },
         categoryWhitelist: {
             bans: categoryWhitelistSchema,
             kicks: categoryWhitelistSchema,
