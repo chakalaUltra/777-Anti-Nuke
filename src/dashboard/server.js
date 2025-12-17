@@ -2,7 +2,7 @@ const express = require('express');
 const session = require('express-session');
 const passport = require('passport');
 const DiscordStrategy = require('passport-discord').Strategy;
-const MongoStore = require('connect-mongo');
+const MongoStore = require('connect-mongo').default;
 const path = require('path');
 const cookieParser = require('cookie-parser');
 
