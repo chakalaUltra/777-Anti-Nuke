@@ -70,12 +70,20 @@ Type `/` in Discord to see all available slash commands.
 
 ### Anti-Nuke Commands
 - `antinuke [on/off]` - Toggle anti-nuke protection
+- `antinuke-setup` - Interactive setup wizard for configuring all anti-nuke settings
 - `antinuke-whitelist <add/remove/list> <category> [user/role]` - Category-specific whitelist for users/roles
 - `antinuke-blacklist <add/remove/list> <category> [user/role]` - Category-specific blacklist for users/roles
 - `antinuke-botwhitelist <add/remove/list> [botId]`
 - `antinuke-botblacklist <add/remove/list> [botId]`
 
 **Whitelist/Blacklist Categories:** bans, kicks, roles, channels, webhooks, emojis, all
+
+**Anti-Nuke Setup Options (via `/antinuke-setup`):**
+- Toggle anti-nuke on/off
+- Set punishment type (ban, kick, timeout, strip roles)
+- Set log channel for anti-nuke alerts
+- Toggle individual protections (anti-ban, anti-kick, anti-role create/delete, anti-channel create/delete, anti-webhook, anti-bot)
+- Set action thresholds (how many actions trigger punishment)
 
 ### AutoMod Commands
 - `automod [on/off]` - Toggle automod
@@ -102,6 +110,7 @@ Type `/` in Discord to see all available slash commands.
 - `setprefix <prefix>` - Change prefix
 - `perm-add <role> <command|*>` - Add command permission to role
 - `perm-remove <role> <command|all>` - Remove command permission
+- `perm-list [role]` - View all command permissions or permissions for a specific role
 - `help [command]` - View all commands or get info on a specific command
 
 ### Ticket Commands
@@ -129,6 +138,7 @@ Type `/` in Discord to see all available slash commands.
 - Custom welcome message for new tickets
 
 ## Recent Changes
+- December 17, 2025: Added /antinuke-setup interactive wizard for configuring punishment, thresholds, log channel, and protection toggles. Added /perm-list to view role command permissions.
 - December 16, 2025: Added comprehensive ticket system with /ticket-wizard setup, ticket panels, Close/Claim buttons, Transcript/Delete/Re-Open controls, /add and /remove commands, and full logging
 - December 13, 2025: Updated whitelist/blacklist commands to support both users AND roles with category-specific controls (bans, kicks, roles, channels, webhooks, emojis, all)
 - December 12, 2025: Added slash command support for all commands
