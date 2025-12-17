@@ -2,7 +2,7 @@ const { ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, M
 const TicketConfig = require('../models/TicketConfig');
 const Ticket = require('../models/Ticket');
 const config = require('../config');
-const { createEmbed, successEmbed, errorEmbed } = require('./embedBuilder');
+const { createEmbed, successEmbed, errorEmbed, infoEmbed } = require('./embedBuilder');
 
 const wizardSessions = new Map();
 
@@ -422,6 +422,12 @@ async function handleModalSubmit(interaction, client) {
     const sessionKey = `${interaction.guild.id}-${interaction.user.id}`;
     let session = wizardSessions.get(sessionKey);
 
+    if (customId === 'ticket_questions_modal') {
+        await interaction.deferReply({ ephemeral: true });
+        await createTicketChannel(interaction, client);
+        return;
+    }
+
     if (!session) {
         return interaction.reply({ embeds: [errorEmbed('Session expired. Please run /ticket-wizard again.')], ephemeral: true });
     }
@@ -460,9 +466,12 @@ async function handleModalSubmit(interaction, client) {
     else if (customId === 'ticket_wizard_questions_modal') {
         const questions = [];
         for (let i = 0; i < 5; i++) {
-            const question = interaction.fields.getTextInputValue(`question_${i}`);
-            if (question && question.trim()) {
-                questions.push(question.trim());
+            try {
+                const question = interaction.fields.getTextInputValue(`question_${i}`);
+                if (question && question.trim()) {
+                    questions.push(question.trim());
+                }
+            } catch (e) {
             }
         }
         session.questions = questions;
@@ -506,10 +515,6 @@ async function handleModalSubmit(interaction, client) {
 
         await interaction.reply({ embeds: [embed], components: [row1, row2], ephemeral: true });
     }
-
-    else if (customId === 'ticket_questions_modal') {
-        await createTicketChannel(interaction, client);
-    }
 }
 
 async function showCategorySelect(interaction, session) {
@@ -517,7 +522,7 @@ async function showCategorySelect(interaction, session) {
         .filter(c => c.type === ChannelType.GuildCategory)
         .first(25);
 
-    if (categories.size === 0) {
+    if (!categories || categories.length === 0) {
         const embed = createEmbed({
             title: `${config.emojis.x_} No Categories Found`,
             description: 'Please create at least one category for tickets before running this wizard.',
@@ -723,9 +728,12 @@ async function createTicketChannel(interaction, client) {
     const answers = [];
     if (interaction.isModalSubmit() && ticketConfig.askQuestions) {
         ticketConfig.questions.forEach((question, index) => {
-            const answer = interaction.fields.getTextInputValue(`answer_${index}`);
-            if (answer) {
-                answers.push({ question, answer });
+            try {
+                const answer = interaction.fields.getTextInputValue(`answer_${index}`);
+                if (answer) {
+                    answers.push({ question, answer });
+                }
+            } catch (e) {
             }
         });
     }
@@ -772,7 +780,13 @@ async function createTicketChannel(interaction, client) {
             channelId: ticketChannel.id,
             openerId: interaction.user.id,
             openerTag: interaction.user.tag,
-            answers
+            answers,
+            actionLog: [{
+                action: 'created',
+                userId: interaction.user.id,
+                userTag: interaction.user.tag,
+                timestamp: new Date()
+            }]
         });
         await ticket.save();
         await ticketConfig.save();
@@ -790,7 +804,6 @@ async function createTicketChannel(interaction, client) {
             .setDescription(welcomeDescription)
             .setColor(ticketConfig.panelColor)
             .addFields(
-                { name: 'Created By', value: `<@${interaction.user.id}>`, inline: true },
                 { name: 'Status', value: '🟢 Open', inline: true }
             )
             .setTimestamp();
@@ -809,27 +822,20 @@ async function createTicketChannel(interaction, client) {
 
         const row = new ActionRowBuilder().addComponents(closeButton, claimButton);
 
-        let content = '';
+        let pingContent = `<@${interaction.user.id}>`;
         if (ticketConfig.pingSupportOnCreate) {
-            content = ticketConfig.supportRoles.map(id => `<@&${id}>`).join(' ');
+            pingContent += ' ' + ticketConfig.supportRoles.map(id => `<@&${id}>`).join(' ');
         }
 
-        await ticketChannel.send({ content: content || undefined, embeds: [welcomeEmbed], components: [row] });
+        await ticketChannel.send({ content: pingContent, embeds: [welcomeEmbed], components: [row] });
 
         if (ticketConfig.logChannelId) {
             const logChannel = interaction.guild.channels.cache.get(ticketConfig.logChannelId);
             if (logChannel) {
-                const logEmbed = createEmbed({
-                    title: `${config.emojis.document_approved} Ticket Created`,
-                    color: config.colors.success,
-                    fields: [
-                        { name: 'Ticket', value: `#${ticketNumber}`, inline: true },
-                        { name: 'Channel', value: `<#${ticketChannel.id}>`, inline: true },
-                        { name: 'Created By', value: `<@${interaction.user.id}>`, inline: true }
-                    ],
-                    timestamp: true
-                });
-                await logChannel.send({ embeds: [logEmbed] });
+                const logEmbed = buildTicketLogEmbed(ticket, ticketChannel, interaction.guild);
+                const logMessage = await logChannel.send({ embeds: [logEmbed] });
+                ticket.logMessageId = logMessage.id;
+                await ticket.save();
             }
         }
 
@@ -846,6 +852,83 @@ async function createTicketChannel(interaction, client) {
             embeds: [errorEmbed('An error occurred while creating your ticket.')], 
             ephemeral: true 
         });
+    }
+}
+
+function buildTicketLogEmbed(ticket, channel, guild) {
+    const statusColors = {
+        'open': 0x00FF00,
+        'closed': 0xFF0000,
+        'deleted': 0x808080
+    };
+
+    const statusEmojis = {
+        'open': '🟢',
+        'closed': '🔴',
+        'deleted': '⚫'
+    };
+
+    let actionsText = '';
+    if (ticket.actionLog && ticket.actionLog.length > 0) {
+        ticket.actionLog.forEach(action => {
+            const time = `<t:${Math.floor(new Date(action.timestamp).getTime() / 1000)}:R>`;
+            switch (action.action) {
+                case 'created':
+                    actionsText += `📝 **Created** by <@${action.userId}> ${time}\n`;
+                    break;
+                case 'claimed':
+                    actionsText += `✋ **Claimed** by <@${action.userId}> ${time}\n`;
+                    break;
+                case 'closed':
+                    actionsText += `🔒 **Closed** by <@${action.userId}> ${time}\n`;
+                    break;
+                case 'reopened':
+                    actionsText += `🔓 **Reopened** by <@${action.userId}> ${time}\n`;
+                    break;
+                case 'transcript':
+                    actionsText += `📄 **Transcript generated** by <@${action.userId}> ${time}\n`;
+                    break;
+                case 'deleted':
+                    actionsText += `🗑️ **Deleted** by <@${action.userId}> ${time}\n`;
+                    break;
+            }
+        });
+    }
+
+    const embed = new EmbedBuilder()
+        .setTitle(`${statusEmojis[ticket.status]} Ticket #${ticket.ticketNumber}`)
+        .setColor(statusColors[ticket.status] || 0x5865F2)
+        .addFields(
+            { name: 'Opened By', value: `<@${ticket.openerId}>`, inline: true },
+            { name: 'Status', value: ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1), inline: true },
+            { name: 'Channel', value: channel ? `<#${channel.id}>` : 'Deleted', inline: true }
+        )
+        .setTimestamp();
+
+    if (ticket.claimedBy) {
+        embed.addFields({ name: 'Claimed By', value: `<@${ticket.claimedBy}>`, inline: true });
+    }
+
+    if (actionsText) {
+        embed.addFields({ name: 'Action History', value: actionsText.trim(), inline: false });
+    }
+
+    return embed;
+}
+
+async function updateTicketLog(ticket, guild, ticketConfig) {
+    if (!ticketConfig.logChannelId || !ticket.logMessageId) return;
+
+    const logChannel = guild.channels.cache.get(ticketConfig.logChannelId);
+    if (!logChannel) return;
+
+    try {
+        const logMessage = await logChannel.messages.fetch(ticket.logMessageId);
+        const ticketChannel = guild.channels.cache.get(ticket.channelId);
+        const logEmbed = buildTicketLogEmbed(ticket, ticketChannel, guild);
+        await logMessage.edit({ embeds: [logEmbed] });
+    } catch (error) {
+        console.error('Error updating ticket log:', error);
     }
 }
 
@@ -878,6 +961,12 @@ async function handleTicketClose(interaction, client) {
     ticket.closedBy = interaction.user.id;
     ticket.closedByTag = interaction.user.tag;
     ticket.closedAt = new Date();
+    ticket.actionLog.push({
+        action: 'closed',
+        userId: interaction.user.id,
+        userTag: interaction.user.tag,
+        timestamp: new Date()
+    });
     await ticket.save();
 
     await interaction.channel.permissionOverwrites.edit(ticket.openerId, {
@@ -925,23 +1014,7 @@ async function handleTicketClose(interaction, client) {
 
     await interaction.channel.send({ embeds: [closedEmbed], components: [row] });
 
-    if (ticketConfig.logChannelId) {
-        const logChannel = interaction.guild.channels.cache.get(ticketConfig.logChannelId);
-        if (logChannel) {
-            const logEmbed = createEmbed({
-                title: `${config.emojis.x_} Ticket Closed`,
-                color: config.colors.error,
-                fields: [
-                    { name: 'Ticket', value: `#${ticket.ticketNumber}`, inline: true },
-                    { name: 'Closed By', value: `<@${interaction.user.id}>`, inline: true },
-                    { name: 'Claimed By', value: ticket.claimedBy ? `<@${ticket.claimedBy}>` : 'Not claimed', inline: true },
-                    { name: 'Opened By', value: `<@${ticket.openerId}>`, inline: true }
-                ],
-                timestamp: true
-            });
-            await logChannel.send({ embeds: [logEmbed] });
-        }
-    }
+    await updateTicketLog(ticket, interaction.guild, ticketConfig);
 }
 
 async function handleTicketClaim(interaction, client) {
@@ -970,26 +1043,17 @@ async function handleTicketClaim(interaction, client) {
     ticket.claimedBy = interaction.user.id;
     ticket.claimedByTag = interaction.user.tag;
     ticket.claimedAt = new Date();
+    ticket.actionLog.push({
+        action: 'claimed',
+        userId: interaction.user.id,
+        userTag: interaction.user.tag,
+        timestamp: new Date()
+    });
     await ticket.save();
 
     await interaction.reply({ embeds: [successEmbed(`This ticket has been claimed by <@${interaction.user.id}>`)] });
 
-    if (ticketConfig.logChannelId) {
-        const logChannel = interaction.guild.channels.cache.get(ticketConfig.logChannelId);
-        if (logChannel) {
-            const logEmbed = createEmbed({
-                title: `${config.emojis.user_member} Ticket Claimed`,
-                color: config.colors.info,
-                fields: [
-                    { name: 'Ticket', value: `#${ticket.ticketNumber}`, inline: true },
-                    { name: 'Claimed By', value: `<@${interaction.user.id}>`, inline: true },
-                    { name: 'Opened By', value: `<@${ticket.openerId}>`, inline: true }
-                ],
-                timestamp: true
-            });
-            await logChannel.send({ embeds: [logEmbed] });
-        }
-    }
+    await updateTicketLog(ticket, interaction.guild, ticketConfig);
 }
 
 async function handleTicketTranscript(interaction, client) {
@@ -1023,22 +1087,21 @@ async function handleTicketTranscript(interaction, client) {
             poweredBy: false
         });
 
+        ticket.actionLog.push({
+            action: 'transcript',
+            userId: interaction.user.id,
+            userTag: interaction.user.tag,
+            timestamp: new Date()
+        });
+        await ticket.save();
+
         if (ticketConfig.logChannelId) {
             const logChannel = interaction.guild.channels.cache.get(ticketConfig.logChannelId);
             if (logChannel) {
-                const transcriptEmbed = createEmbed({
-                    title: `${config.emojis.document_approved} Ticket Transcript`,
-                    color: config.colors.info,
-                    fields: [
-                        { name: 'Ticket', value: `#${ticket.ticketNumber}`, inline: true },
-                        { name: 'Created By', value: `<@${ticket.openerId}>`, inline: true },
-                        { name: 'Claimed By', value: ticket.claimedBy ? `<@${ticket.claimedBy}>` : 'Not claimed', inline: true },
-                        { name: 'Generated By', value: `<@${interaction.user.id}>`, inline: true }
-                    ],
-                    timestamp: true
+                await logChannel.send({ 
+                    content: `📄 **Transcript for Ticket #${ticket.ticketNumber}**`, 
+                    files: [transcript] 
                 });
-
-                await logChannel.send({ embeds: [transcriptEmbed], files: [transcript] });
             }
         }
 
@@ -1056,6 +1119,8 @@ async function handleTicketTranscript(interaction, client) {
                 console.log('Could not DM transcript to user:', dmError.message);
             }
         }
+
+        await updateTicketLog(ticket, interaction.guild, ticketConfig);
 
         await interaction.editReply({ embeds: [successEmbed('Transcript has been generated and sent to the log channel.')] });
 
@@ -1090,6 +1155,12 @@ async function handleTicketDelete(interaction, client) {
     ticket.deletedBy = interaction.user.id;
     ticket.deletedByTag = interaction.user.tag;
     ticket.deletedAt = new Date();
+    ticket.actionLog.push({
+        action: 'deleted',
+        userId: interaction.user.id,
+        userTag: interaction.user.tag,
+        timestamp: new Date()
+    });
     await ticket.save();
 
     if (ticketConfig.logChannelId) {
@@ -1104,51 +1175,17 @@ async function handleTicketDelete(interaction, client) {
                     poweredBy: false
                 });
 
-                const logEmbed = createEmbed({
-                    title: `${config.emojis.x_} Ticket Deleted`,
-                    color: config.colors.error,
-                    fields: [
-                        { name: 'Ticket', value: `#${ticket.ticketNumber}`, inline: true },
-                        { name: 'Opened By', value: `<@${ticket.openerId}>`, inline: true },
-                        { name: 'Claimed By', value: ticket.claimedBy ? `<@${ticket.claimedBy}>` : 'Not claimed', inline: true },
-                        { name: 'Deleted By', value: `<@${interaction.user.id}>`, inline: true }
-                    ],
-                    timestamp: true
+                await logChannel.send({ 
+                    content: `📄 **Final Transcript for Ticket #${ticket.ticketNumber}** (Deleted)`, 
+                    files: [transcript] 
                 });
-
-                await logChannel.send({ embeds: [logEmbed], files: [transcript] });
-
-                if (ticketConfig.dmTranscript) {
-                    try {
-                        const opener = await client.users.fetch(ticket.openerId);
-                        const dmEmbed = createEmbed({
-                            title: `Ticket #${ticket.ticketNumber} Deleted`,
-                            description: `Your ticket in **${interaction.guild.name}** has been deleted. Here is the transcript.`,
-                            color: config.colors.info,
-                            timestamp: true
-                        });
-                        await opener.send({ embeds: [dmEmbed], files: [transcript] });
-                    } catch (dmError) {
-                        console.log('Could not DM transcript to user:', dmError.message);
-                    }
-                }
-            } catch (transcriptError) {
-                console.log('Could not generate transcript:', transcriptError.message);
-                const logEmbed = createEmbed({
-                    title: `${config.emojis.x_} Ticket Deleted`,
-                    color: config.colors.error,
-                    fields: [
-                        { name: 'Ticket', value: `#${ticket.ticketNumber}`, inline: true },
-                        { name: 'Opened By', value: `<@${ticket.openerId}>`, inline: true },
-                        { name: 'Claimed By', value: ticket.claimedBy ? `<@${ticket.claimedBy}>` : 'Not claimed', inline: true },
-                        { name: 'Deleted By', value: `<@${interaction.user.id}>`, inline: true }
-                    ],
-                    timestamp: true
-                });
-                await logChannel.send({ embeds: [logEmbed] });
+            } catch (error) {
+                console.error('Error generating delete transcript:', error);
             }
         }
     }
+
+    await updateTicketLog(ticket, interaction.guild, ticketConfig);
 
     setTimeout(async () => {
         try {
@@ -1166,8 +1203,8 @@ async function handleTicketReopen(interaction, client) {
         return interaction.reply({ embeds: [errorEmbed('This is not a valid ticket channel.')], ephemeral: true });
     }
 
-    if (ticket.status === 'open') {
-        return interaction.reply({ embeds: [errorEmbed('This ticket is already open.')], ephemeral: true });
+    if (ticket.status !== 'closed') {
+        return interaction.reply({ embeds: [errorEmbed('This ticket is not closed.')], ephemeral: true });
     }
 
     const ticketConfig = await TicketConfig.findOne({ guildId: interaction.guild.id });
@@ -1179,13 +1216,21 @@ async function handleTicketReopen(interaction, client) {
                    interaction.member.permissions.has(PermissionFlagsBits.Administrator);
     
     if (!isStaff) {
-        return interaction.reply({ embeds: [errorEmbed('Only support staff can re-open tickets.')], ephemeral: true });
+        return interaction.reply({ embeds: [errorEmbed('Only support staff can reopen tickets.')], ephemeral: true });
     }
+
+    await interaction.deferUpdate();
 
     ticket.status = 'open';
     ticket.closedBy = null;
     ticket.closedByTag = null;
     ticket.closedAt = null;
+    ticket.actionLog.push({
+        action: 'reopened',
+        userId: interaction.user.id,
+        userTag: interaction.user.tag,
+        timestamp: new Date()
+    });
     await ticket.save();
 
     await interaction.channel.permissionOverwrites.edit(ticket.openerId, {
@@ -1203,24 +1248,30 @@ async function handleTicketReopen(interaction, client) {
 
     await interaction.channel.setName(`ticket-${ticket.ticketNumber}`);
 
-    await interaction.reply({ embeds: [successEmbed(`This ticket has been re-opened by <@${interaction.user.id}>`)] });
+    const reopenEmbed = new EmbedBuilder()
+        .setTitle('Ticket Reopened')
+        .setDescription(`This ticket has been reopened by <@${interaction.user.id}>`)
+        .setColor('#00ff00')
+        .setTimestamp();
 
-    if (ticketConfig.logChannelId) {
-        const logChannel = interaction.guild.channels.cache.get(ticketConfig.logChannelId);
-        if (logChannel) {
-            const logEmbed = createEmbed({
-                title: `${config.emojis.approved} Ticket Re-Opened`,
-                color: config.colors.success,
-                fields: [
-                    { name: 'Ticket', value: `#${ticket.ticketNumber}`, inline: true },
-                    { name: 'Re-Opened By', value: `<@${interaction.user.id}>`, inline: true },
-                    { name: 'Opened By', value: `<@${ticket.openerId}>`, inline: true }
-                ],
-                timestamp: true
-            });
-            await logChannel.send({ embeds: [logEmbed] });
-        }
-    }
+    const closeButton = new ButtonBuilder()
+        .setCustomId('ticket_close')
+        .setLabel('Close')
+        .setStyle(ButtonStyle.Danger)
+        .setEmoji('🔒');
+
+    const claimButton = new ButtonBuilder()
+        .setCustomId('ticket_claim')
+        .setLabel('Claim')
+        .setStyle(ButtonStyle.Primary)
+        .setEmoji('✋')
+        .setDisabled(!!ticket.claimedBy);
+
+    const row = new ActionRowBuilder().addComponents(closeButton, claimButton);
+
+    await interaction.channel.send({ embeds: [reopenEmbed], components: [row] });
+
+    await updateTicketLog(ticket, interaction.guild, ticketConfig);
 }
 
 module.exports = {

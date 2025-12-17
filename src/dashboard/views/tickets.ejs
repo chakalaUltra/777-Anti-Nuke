@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tickets - <%= guild.name %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-layout with-sidebar">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="/dashboard" class="back-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="19" y1="12" x2="5" y2="12"/>
+                        <polyline points="12 19 5 12 12 5"/>
+                    </svg>
+                </a>
+                <div class="guild-header">
+                    <% if (guild.icon) { %>
+                        <img src="https://cdn.discordapp.com/icons/<%= guild.id %>/<%= guild.icon %>.png" alt="<%= guild.name %>" class="sidebar-guild-icon">
+                    <% } else { %>
+                        <div class="sidebar-guild-initials"><%= guild.name.charAt(0) %></div>
+                    <% } %>
+                    <span class="sidebar-guild-name"><%= guild.name %></span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="/dashboard/<%= guild.id %>" class="sidebar-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    Overview
+                </a>
+                <a href="/dashboard/<%= guild.id %>/logs" class="sidebar-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
+                    Logs
+                </a>
+                <a href="/dashboard/<%= guild.id %>/tickets" class="sidebar-link active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                    Tickets
+                </a>
+                <a href="/dashboard/<%= guild.id %>/moderation" class="sidebar-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                    Moderation
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <img src="https://cdn.discordapp.com/avatars/<%= user.id %>/<%= user.avatar %>.png" alt="Avatar" class="user-avatar-small">
+                    <span><%= user.username %></span>
+                </div>
+                <a href="/logout" class="logout-btn-small">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                </a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="content-header">
+                <h1>Ticket System Configuration</h1>
+                <p>Set up your server's ticket system</p>
+            </div>
+
+            <form id="ticket-config-form" class="ticket-form">
+                <div class="form-section">
+                    <h2>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <path d="M3 9h18"/>
+                        </svg>
+                        Panel Settings
+                    </h2>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="panelTitle">Panel Title</label>
+                            <input type="text" id="panelTitle" name="panelTitle" value="<%= ticketConfig ? ticketConfig.panelTitle : 'Support Tickets' %>" placeholder="Support Tickets">
+                        </div>
+                        <div class="form-group">
+                            <label for="panelColor">Panel Color</label>
+                            <div class="color-input-wrapper">
+                                <input type="color" id="panelColorPicker" value="<%= ticketConfig ? ticketConfig.panelColor : '#5865F2' %>">
+                                <input type="text" id="panelColor" name="panelColor" value="<%= ticketConfig ? ticketConfig.panelColor : '#5865F2' %>" placeholder="#5865F2">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="panelDescription">Panel Description</label>
+                        <textarea id="panelDescription" name="panelDescription" rows="3" placeholder="Click the button below to create a support ticket."><%= ticketConfig ? ticketConfig.panelDescription : 'Click the button below to create a support ticket.' %></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Panel Channel</label>
+                        <div class="channel-selector" data-field="panelChannelId">
+                            <button class="channel-select-btn" type="button">
+                                <span class="selected-channel">
+                                    <% if (ticketConfig && ticketConfig.panelChannelId) { %>
+                                        <% const channel = textChannels.find(c => c.id === ticketConfig.panelChannelId); %>
+                                        # <%= channel ? channel.name : 'Unknown Channel' %>
+                                    <% } else { %>
+                                        Click to choose channel
+                                    <% } %>
+                                </span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"/>
+                                </svg>
+                            </button>
+                            <input type="hidden" name="panelChannelId" value="<%= ticketConfig ? ticketConfig.panelChannelId || '' : '' %>">
+                            <div class="channel-dropdown">
+                                <% textChannels.forEach(channel => { %>
+                                    <div class="channel-option" data-value="<%= channel.id %>">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M4 11a9 9 0 0 1 9 9"/>
+                                            <path d="M4 4a16 16 0 0 1 16 16"/>
+                                            <circle cx="5" cy="19" r="1"/>
+                                        </svg>
+                                        # <%= channel.name %>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h2>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        Ticket Settings
+                    </h2>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Ticket Category</label>
+                            <div class="channel-selector" data-field="ticketCategoryId">
+                                <button class="channel-select-btn" type="button">
+                                    <span class="selected-channel">
+                                        <% if (ticketConfig && ticketConfig.ticketCategoryId) { %>
+                                            <% const cat = categories.find(c => c.id === ticketConfig.ticketCategoryId); %>
+                                            <%= cat ? cat.name : 'Unknown Category' %>
+                                        <% } else { %>
+                                            Click to choose category
+                                        <% } %>
+                                    </span>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="6 9 12 15 18 9"/>
+                                    </svg>
+                                </button>
+                                <input type="hidden" name="ticketCategoryId" value="<%= ticketConfig ? ticketConfig.ticketCategoryId || '' : '' %>">
+                                <div class="channel-dropdown">
+                                    <% categories.forEach(category => { %>
+                                        <div class="channel-option" data-value="<%= category.id %>">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                                            </svg>
+                                            <%= category.name %>
+                                        </div>
+                                    <% }); %>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Closed Ticket Category</label>
+                            <div class="channel-selector" data-field="closedCategoryId">
+                                <button class="channel-select-btn" type="button">
+                                    <span class="selected-channel">
+                                        <% if (ticketConfig && ticketConfig.closedCategoryId) { %>
+                                            <% const cat = categories.find(c => c.id === ticketConfig.closedCategoryId); %>
+                                            <%= cat ? cat.name : 'Unknown Category' %>
+                                        <% } else { %>
+                                            Click to choose category
+                                        <% } %>
+                                    </span>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="6 9 12 15 18 9"/>
+                                    </svg>
+                                </button>
+                                <input type="hidden" name="closedCategoryId" value="<%= ticketConfig ? ticketConfig.closedCategoryId || '' : '' %>">
+                                <div class="channel-dropdown">
+                                    <% categories.forEach(category => { %>
+                                        <div class="channel-option" data-value="<%= category.id %>">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                                            </svg>
+                                            <%= category.name %>
+                                        </div>
+                                    <% }); %>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Log Channel</label>
+                        <div class="channel-selector" data-field="logChannelId">
+                            <button class="channel-select-btn" type="button">
+                                <span class="selected-channel">
+                                    <% if (ticketConfig && ticketConfig.logChannelId) { %>
+                                        <% const channel = textChannels.find(c => c.id === ticketConfig.logChannelId); %>
+                                        # <%= channel ? channel.name : 'Unknown Channel' %>
+                                    <% } else { %>
+                                        Click to choose channel
+                                    <% } %>
+                                </span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"/>
+                                </svg>
+                            </button>
+                            <input type="hidden" name="logChannelId" value="<%= ticketConfig ? ticketConfig.logChannelId || '' : '' %>">
+                            <div class="channel-dropdown">
+                                <% textChannels.forEach(channel => { %>
+                                    <div class="channel-option" data-value="<%= channel.id %>">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M4 11a9 9 0 0 1 9 9"/>
+                                            <path d="M4 4a16 16 0 0 1 16 16"/>
+                                            <circle cx="5" cy="19" r="1"/>
+                                        </svg>
+                                        # <%= channel.name %>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="welcomeMessage">Welcome Message</label>
+                        <textarea id="welcomeMessage" name="welcomeMessage" rows="3" placeholder="Welcome to the ticket channel. Please be patient till the Support Team arrives!"><%= ticketConfig ? ticketConfig.welcomeMessage : 'Welcome to the ticket channel. Please be patient till the Support Team arrives!' %></textarea>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h2>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
+                        Support Roles
+                    </h2>
+
+                    <div class="roles-selector">
+                        <% roles.forEach(role => { %>
+                            <label class="role-checkbox">
+                                <input type="checkbox" name="supportRoles" value="<%= role.id %>" 
+                                    <%= ticketConfig && ticketConfig.supportRoles && ticketConfig.supportRoles.includes(role.id) ? 'checked' : '' %>>
+                                <span class="role-tag" style="border-color: <%= role.color %>">
+                                    <span class="role-dot" style="background-color: <%= role.color %>"></span>
+                                    <%= role.name %>
+                                </span>
+                            </label>
+                        <% }); %>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h2>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                        Options
+                    </h2>
+
+                    <div class="toggle-options">
+                        <label class="toggle-option">
+                            <input type="checkbox" name="pingSupportOnCreate" <%= ticketConfig && ticketConfig.pingSupportOnCreate ? 'checked' : '' %>>
+                            <span class="toggle-slider"></span>
+                            <div class="toggle-info">
+                                <span class="toggle-label">Ping Support on Create</span>
+                                <span class="toggle-description">Ping support roles when a new ticket is created</span>
+                            </div>
+                        </label>
+                        <label class="toggle-option">
+                            <input type="checkbox" name="dmTranscript" <%= ticketConfig && ticketConfig.dmTranscript ? 'checked' : '' %>>
+                            <span class="toggle-slider"></span>
+                            <div class="toggle-info">
+                                <span class="toggle-label">DM Transcript</span>
+                                <span class="toggle-description">Send transcript to ticket opener via DM</span>
+                            </div>
+                        </label>
+                        <label class="toggle-option">
+                            <input type="checkbox" name="askQuestions" <%= ticketConfig && ticketConfig.askQuestions ? 'checked' : '' %>>
+                            <span class="toggle-slider"></span>
+                            <div class="toggle-info">
+                                <span class="toggle-label">Ask Questions</span>
+                                <span class="toggle-description">Ask questions before creating a ticket</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="questions-section" id="questionsSection" style="display: <%= ticketConfig && ticketConfig.askQuestions ? 'block' : 'none' %>">
+                        <h3>Ticket Questions</h3>
+                        <div id="questionsContainer">
+                            <% if (ticketConfig && ticketConfig.questions && ticketConfig.questions.length > 0) { %>
+                                <% ticketConfig.questions.forEach((question, index) => { %>
+                                    <div class="question-input">
+                                        <input type="text" name="questions[]" value="<%= question %>" placeholder="Question <%= index + 1 %>">
+                                        <button type="button" class="remove-question-btn">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                                <line x1="6" y1="6" x2="18" y2="18"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                <% }); %>
+                            <% } else { %>
+                                <div class="question-input">
+                                    <input type="text" name="questions[]" placeholder="Question 1">
+                                    <button type="button" class="remove-question-btn">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <line x1="18" y1="6" x2="6" y2="18"/>
+                                            <line x1="6" y1="6" x2="18" y2="18"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            <% } %>
+                        </div>
+                        <button type="button" id="addQuestionBtn" class="btn btn-secondary">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"/>
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                            Add Question
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                            <polyline points="17 21 17 13 7 13 7 21"/>
+                            <polyline points="7 3 7 8 15 8"/>
+                        </svg>
+                        Save Configuration
+                    </button>
+                    <button type="button" id="sendPanelBtn" class="btn btn-success">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"/>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                        </svg>
+                        Send Panel
+                    </button>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const guildId = '<%= guild.id %>';
+    </script>
+    <script src="/js/main.js"></script>
+</body>
+</html>

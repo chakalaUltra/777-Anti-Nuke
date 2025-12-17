@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moderation - <%= guild.name %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-layout with-sidebar">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="/dashboard" class="back-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="19" y1="12" x2="5" y2="12"/>
+                        <polyline points="12 19 5 12 12 5"/>
+                    </svg>
+                </a>
+                <div class="guild-header">
+                    <% if (guild.icon) { %>
+                        <img src="https://cdn.discordapp.com/icons/<%= guild.id %>/<%= guild.icon %>.png" alt="<%= guild.name %>" class="sidebar-guild-icon">
+                    <% } else { %>
+                        <div class="sidebar-guild-initials"><%= guild.name.charAt(0) %></div>
+                    <% } %>
+                    <span class="sidebar-guild-name"><%= guild.name %></span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="/dashboard/<%= guild.id %>" class="sidebar-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    Overview
+                </a>
+                <a href="/dashboard/<%= guild.id %>/logs" class="sidebar-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
+                    Logs
+                </a>
+                <a href="/dashboard/<%= guild.id %>/tickets" class="sidebar-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                    Tickets
+                </a>
+                <a href="/dashboard/<%= guild.id %>/moderation" class="sidebar-link active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                    Moderation
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <img src="https://cdn.discordapp.com/avatars/<%= user.id %>/<%= user.avatar %>.png" alt="Avatar" class="user-avatar-small">
+                    <span><%= user.username %></span>
+                </div>
+                <a href="/logout" class="logout-btn-small">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                </a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="content-header">
+                <h1>Moderation Settings</h1>
+                <p>Configure anti-nuke and auto-moderation features</p>
+            </div>
+
+            <div class="info-banner">
+                <div class="info-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="16" x2="12" y2="12"/>
+                        <line x1="12" y1="8" x2="12.01" y2="8"/>
+                    </svg>
+                </div>
+                <div class="info-content">
+                    <h3>Command-Based Configuration</h3>
+                    <p>Anti-nuke and auto-moderation settings are configured through Discord commands for enhanced security. Use the following commands in your server:</p>
+                    <ul>
+                        <li><code>/antinuke</code> - Configure anti-nuke protection</li>
+                        <li><code>/automod</code> - Set up auto-moderation</li>
+                        <li><code>/blockedwords</code> - Manage blocked words</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="moderation-features">
+                <div class="feature-info-card">
+                    <div class="feature-header">
+                        <div class="feature-icon antinuke">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            </svg>
+                        </div>
+                        <h3>Anti-Nuke Protection</h3>
+                    </div>
+                    <p>Protects your server from mass deletions, bans, and other destructive actions. Features include:</p>
+                    <ul class="feature-list">
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            Mass channel delete protection
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            Mass role delete protection
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            Mass ban/kick protection
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            Webhook spam protection
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            Bot addition protection
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="feature-info-card">
+                    <div class="feature-header">
+                        <div class="feature-icon automod">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="12" y1="8" x2="12" y2="12"/>
+                                <line x1="12" y1="16" x2="12.01" y2="16"/>
+                            </svg>
+                        </div>
+                        <h3>Auto-Moderation</h3>
+                    </div>
+                    <p>Automatically moderate your server with customizable rules:</p>
+                    <ul class="feature-list">
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            Blocked words filter
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            Link filtering
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            Spam detection
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            Mass mention prevention
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            Caps lock filter
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="commands-section">
+                <h2>Quick Commands</h2>
+                <div class="commands-grid">
+                    <div class="command-card">
+                        <div class="command-name">/antinuke enable</div>
+                        <div class="command-desc">Enable anti-nuke protection</div>
+                    </div>
+                    <div class="command-card">
+                        <div class="command-name">/antinuke disable</div>
+                        <div class="command-desc">Disable anti-nuke protection</div>
+                    </div>
+                    <div class="command-card">
+                        <div class="command-name">/antinuke-whitelist add</div>
+                        <div class="command-desc">Add user to whitelist</div>
+                    </div>
+                    <div class="command-card">
+                        <div class="command-name">/automod enable</div>
+                        <div class="command-desc">Enable auto-moderation</div>
+                    </div>
+                    <div class="command-card">
+                        <div class="command-name">/blockedwords add</div>
+                        <div class="command-desc">Add blocked word</div>
+                    </div>
+                    <div class="command-card">
+                        <div class="command-name">/setlogs</div>
+                        <div class="command-desc">Set log channel</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const guildId = '<%= guild.id %>';
+    </script>
+    <script src="/js/main.js"></script>
+</body>
+</html>

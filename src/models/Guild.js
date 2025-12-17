@@ -64,7 +64,15 @@ const guildSchema = new mongoose.Schema({
         commands: [String]
     }],
     
-    mutedRoleId: { type: String, default: null }
+    mutedRoleId: { type: String, default: null },
+    
+    logChannels: {
+        message: { type: String, default: null },
+        member: { type: String, default: null },
+        moderation: { type: String, default: null },
+        antinuke: { type: String, default: null },
+        server: { type: String, default: null }
+    }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Guild', guildSchema);

@@ -29,7 +29,16 @@ const ticketSchema = new mongoose.Schema({
         answer: String
     }],
     
-    transcriptUrl: { type: String, default: null }
+    transcriptUrl: { type: String, default: null },
+    
+    logMessageId: { type: String, default: null },
+    
+    actionLog: [{
+        action: { type: String, enum: ['created', 'claimed', 'closed', 'reopened', 'transcript', 'deleted'] },
+        userId: String,
+        userTag: String,
+        timestamp: { type: Date, default: Date.now }
+    }]
 }, { timestamps: true });
 
 ticketSchema.index({ guildId: 1, ticketNumber: 1 }, { unique: true });

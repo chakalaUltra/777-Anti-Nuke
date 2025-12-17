@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= guild.name %> - Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-layout with-sidebar">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="/dashboard" class="back-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="19" y1="12" x2="5" y2="12"/>
+                        <polyline points="12 19 5 12 12 5"/>
+                    </svg>
+                </a>
+                <div class="guild-header">
+                    <% if (guild.icon) { %>
+                        <img src="https://cdn.discordapp.com/icons/<%= guild.id %>/<%= guild.icon %>.png" alt="<%= guild.name %>" class="sidebar-guild-icon">
+                    <% } else { %>
+                        <div class="sidebar-guild-initials"><%= guild.name.charAt(0) %></div>
+                    <% } %>
+                    <span class="sidebar-guild-name"><%= guild.name %></span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="/dashboard/<%= guild.id %>" class="sidebar-link active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    Overview
+                </a>
+                <a href="/dashboard/<%= guild.id %>/logs" class="sidebar-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
+                    Logs
+                </a>
+                <a href="/dashboard/<%= guild.id %>/tickets" class="sidebar-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                    Tickets
+                </a>
+                <a href="/dashboard/<%= guild.id %>/moderation" class="sidebar-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                    Moderation
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <img src="https://cdn.discordapp.com/avatars/<%= user.id %>/<%= user.avatar %>.png" alt="Avatar" class="user-avatar-small">
+                    <span><%= user.username %></span>
+                </div>
+                <a href="/logout" class="logout-btn-small">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                </a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="content-header">
+                <h1>Server Overview</h1>
+                <p>Manage your server settings and configurations</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon members">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value"><%= guild.memberCount %></span>
+                        <span class="stat-label">Members</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon channels">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 11a9 9 0 0 1 9 9"/>
+                            <path d="M4 4a16 16 0 0 1 16 16"/>
+                            <circle cx="5" cy="19" r="1"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value"><%= guild.channels.cache.size %></span>
+                        <span class="stat-label">Channels</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon roles">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                            <line x1="9" y1="9" x2="9.01" y2="9"/>
+                            <line x1="15" y1="9" x2="15.01" y2="9"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value"><%= guild.roles.cache.size %></span>
+                        <span class="stat-label">Roles</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon boost">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value"><%= guild.premiumSubscriptionCount || 0 %></span>
+                        <span class="stat-label">Boosts</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h2>General Settings</h2>
+                <div class="settings-card">
+                    <form id="general-settings-form">
+                        <div class="form-group">
+                            <label for="prefix">Bot Prefix</label>
+                            <input type="text" id="prefix" name="prefix" value="<%= guildSettings.prefix || '?' %>" maxlength="5">
+                            <span class="form-hint">The prefix used for bot commands</span>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                                <polyline points="17 21 17 13 7 13 7 21"/>
+                                <polyline points="7 3 7 8 15 8"/>
+                            </svg>
+                            Save Settings
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="quick-actions">
+                <h2>Quick Actions</h2>
+                <div class="actions-grid">
+                    <a href="/dashboard/<%= guild.id %>/logs" class="action-card">
+                        <div class="action-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                            </svg>
+                        </div>
+                        <h3>Configure Logs</h3>
+                        <p>Set up logging channels for server events</p>
+                    </a>
+                    <a href="/dashboard/<%= guild.id %>/tickets" class="action-card">
+                        <div class="action-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                            </svg>
+                        </div>
+                        <h3>Ticket System</h3>
+                        <p>Configure the ticket system and support roles</p>
+                    </a>
+                    <a href="/dashboard/<%= guild.id %>/moderation" class="action-card">
+                        <div class="action-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            </svg>
+                        </div>
+                        <h3>Moderation</h3>
+                        <p>Set up auto-moderation and anti-nuke protection</p>
+                    </a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const guildId = '<%= guild.id %>';
+    </script>
+    <script src="/js/main.js"></script>
+</body>
+</html>
