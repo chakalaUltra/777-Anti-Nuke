@@ -372,10 +372,7 @@ module.exports = {
             if (!guildData.antiNuke.protections) guildData.antiNuke.protections = {};
             guildData.antiNuke.protections[protection] = newValue;
 
-            await interaction.update({ 
-                embeds: [successEmbed(`${protection} has been ${newValue ? '**enabled**' : '**disabled**'}.`)], 
-                components: [] 
-            });
+            await this.handleProtections(interaction, guildData);
         }
     },
 
@@ -420,10 +417,7 @@ module.exports = {
             if (!guildData.antiNuke.thresholds) guildData.antiNuke.thresholds = {};
             guildData.antiNuke.thresholds[thresholdType] = value;
 
-            await interaction.update({ 
-                embeds: [successEmbed(`${thresholdType} threshold set to **${value}** actions.`)], 
-                components: [] 
-            });
+            await this.handleThresholds(interaction, guildData);
         }
     },
 
